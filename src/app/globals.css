@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b1120;
+  --color-panel: #111a2e;
+  --color-raised: #18233b;
+  --color-line: #2a3855;
+  --color-ink: #eaf0fa;
+  --color-mute: #a3b1c9;
+  --color-dim: #71819e;
+  --color-flow: #38bdf8;
+  --color-ice: #9bdcfb;
+  --color-ai: #a78bfa;
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-bad: #f87171;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-flow) 35%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-flow);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- Page backdrop ----------
+   A fixed layer behind everything: soft colour glows, an engineering grid, and
+   thin "data streams" that travel along the grid lines. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #0e1730 0%, #0b1120 50%, #0d1228 100%);
+}
+.backdrop-glow {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+.backdrop-glow.g1 {
+  width: 70vmax;
+  height: 70vmax;
+  top: -28vmax;
+  left: -20vmax;
+  background: radial-gradient(closest-side, rgb(56 189 248 / 0.22), transparent);
+}
+.backdrop-glow.g2 {
+  width: 62vmax;
+  height: 62vmax;
+  top: 12vh;
+  right: -26vmax;
+  background: radial-gradient(closest-side, rgb(167 139 250 / 0.2), transparent);
+  animation-duration: 34s;
+  animation-delay: -12s;
+}
+.backdrop-glow.g3 {
+  width: 56vmax;
+  height: 56vmax;
+  bottom: -30vmax;
+  left: 18vw;
+  background: radial-gradient(closest-side, rgb(45 212 191 / 0.13), transparent);
+  animation-duration: 40s;
+  animation-delay: -20s;
+}
+.backdrop-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(148 163 184 / 0.075) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 163 184 / 0.075) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 130% 100% at 50% 15%, #000 45%, transparent 100%);
+}
+/* A streak of light running down (or across) one grid line */
+.backdrop-stream {
+  position: absolute;
+  top: 0;
+  left: calc(56px * var(--line));
+  width: 1px;
+  height: 140px;
+  background: linear-gradient(to bottom, transparent, rgb(125 211 252 / 0.45));
+  animation: stream-y var(--dur, 9s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+.backdrop-stream.across {
+  top: calc(56px * var(--line));
+  left: 0;
+  width: 140px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgb(196 181 253 / 0.4));
+  animation-name: stream-x;
+}
+/* Phones: keep only the vertical streams so nothing crosses lines of text */
+@media (max-width: 639px) {
+  .backdrop-stream.across {
+    display: none;
+  }
+}
+@keyframes stream-y {
+  from { transform: translateY(-140px); }
+  to { transform: translateY(100vh); }
+}
+@keyframes stream-x {
+  from { transform: translateX(-140px); }
+  to { transform: translateX(100vw); }
+}
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(5vw, 7vh, 0) scale(1.12); }
+}
+
+@layer components {
+  .panel {
+    background: color-mix(in srgb, var(--color-panel) 95%, transparent);
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.03) inset, 0 18px 40px -24px rgb(0 0 0 / 0.6);
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-dim);
+  }
+}
+
+@layer components {
+  /* ---------- Data flow connectors ----------
+     .flow-link is the wire between two pipeline stages; each .pk is a packet
+     travelling along it. Packets move with transforms only (compositor-friendly). */
+  .flow-link {
+    position: relative;
+    flex: none;
+    overflow: hidden;
+    color: var(--color-flow);
+  }
+  .flow-link.flow-v,
+  .flow-link.flow-r {
+    width: 9px;
+    height: 28px;
+    background: linear-gradient(var(--color-line), var(--color-line)) center / 1px 100% no-repeat;
+  }
+  .flow-link.flow-h {
+    height: 9px;
+    min-width: 20px;
+    flex: 1 1 0;
+    background: linear-gradient(var(--color-line), var(--color-line)) center / 100% 1px no-repeat;
+  }
+  .flow-link .pk {
+    position: absolute;
+    inset: 0;
+    animation: flow-y var(--dur, 2.2s) linear infinite;
+    animation-delay: var(--delay, 0s);
+    opacity: 0;
+  }
+  .flow-link .pk::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .flow-link.flow-h .pk {
+    animation-name: flow-x;
+  }
+  .flow-link.flow-h .pk::before {
+    left: 0;
+    top: 50%;
+  }
+  @media (min-width: 1024px) {
+    .flow-link.flow-r {
+      width: auto;
+      height: 9px;
+      min-width: 20px;
+      flex: 1 1 0;
+      background: linear-gradient(var(--color-line), var(--color-line)) center / 100% 1px no-repeat;
+    }
+    .flow-link.flow-r .pk {
+      animation-name: flow-x;
+    }
+    .flow-link.flow-r .pk::before {
+      left: 0;
+      top: 50%;
+    }
+  }
+}
+
+@keyframes flow-x {
+  0% { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes flow-y {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.caret {
+  animation: caret 1s step-end infinite;
+}
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.row-in {
+  animation: row-in 0.35s ease-out both;
+}
+
+/* Sections pause their looping animations while off-screen */
+[data-live="false"] .pk,
+[data-live="false"] .pulse-dot {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .flow-link .pk,
+  .backdrop-stream {
+    display: none;
+  }
+  .backdrop-glow {
+    animation: none;
+  }
+  .pulse-dot,
+  .caret,
+  .row-in {
+    animation: none;
+  }
+}
